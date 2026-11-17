@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escalation Command Center: Automated Major Incident Response</title>
+<!-- Deploy: push index.html to a GitHub repo, then Settings > Pages > Deploy from branch (main, root). No build step.
+     Font: CiscoSans is licensed to Cisco and cannot be bundled; it is first in the stack, so it renders where installed, else Helvetica/Arial. -->
+<style>
+:root{--navy:#0d274d;--blue:#049fd9;--sky:#00bceb;--ink:#1b2a3a;--mut:#5b6b7b;--bd:#d9e2ea;--bg:#f4f7fa;--g:#2f7d1f;--a:#a35f00;--r:#c4161c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 CiscoSans,"Helvetica Neue",Helvetica,Arial,sans-serif}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--blue)}
+.in{max-width:1120px;margin:0 auto;padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:22px;font-weight:600}header p{margin:2px 0 0;color:#b7c8dc;font-size:13px}
+main{max-width:1120px;margin:0 auto;padding:14px 16px 40px}
+.ctl{display:flex;flex-wrap:wrap;gap:6px}
+select,button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer}
+button.p{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+#now{background:#e6f6fc;border-left:4px solid var(--blue);padding:8px 12px;border-radius:4px;font-size:14px;min-height:40px;margin-bottom:10px}
+#steps{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.st{font-size:12px;padding:3px 10px;border-radius:99px;background:#e4eaf0;color:var(--mut)}
+.st.on{background:var(--navy);color:#fff}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.kpi div{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
+.kpi small{display:block;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:19px}
+nav{display:flex;flex-wrap:wrap;gap:2px;border-bottom:2px solid var(--bd);margin-bottom:12px}
+nav button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 12px;font-weight:600;color:var(--mut)}
+nav button.on{color:var(--navy);border-color:var(--blue)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.box{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+h3{font-size:14px;margin:0 0 8px;color:var(--navy)}
+ol{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto}
+li{padding:6px 0;border-bottom:1px solid var(--bd);font-size:13.5px}
+.t{color:var(--mut);font-size:12px;margin-right:6px;white-space:nowrap}
+.tag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
+.r{color:var(--r)}.g{color:var(--g)}.a{color:var(--a)}.b{color:#0b6fa0}.mut{color:var(--mut)}
+.sc{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);vertical-align:top}
+.chat{max-height:430px;overflow:auto}
+.m{padding:6px 10px;margin-bottom:6px;border-radius:8px;background:#f0f4f8;font-size:13.5px}
+.m.bot{background:#e6f6fc;border-left:3px solid var(--blue)}
+.pre{white-space:pre-wrap}
+.pods{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.pod{border-radius:6px;padding:8px;text-align:center;font-size:12.5px;color:#fff;background:#6ebe4a}
+.pod.d{background:#fbab18;color:#1b2a3a}.pod.m{background:#049fd9}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:4px;color:#fff;background:var(--navy)}
+.badge.r{background:var(--r);color:#fff}.badge.g{background:#6ebe4a;color:#1b2a3a}.badge.a{background:#fbab18;color:#1b2a3a}
+.chip{display:inline-block;background:#fff;border:1px solid var(--bd);border-radius:6px;padding:4px 10px;margin:0 6px 6px 0;font-size:13px}
+.mail{border:1px solid var(--bd);border-radius:8px;background:#fff;margin-bottom:10px}
+.mail .hd{background:#f0f4f8;padding:8px 14px;font-size:13px;border-bottom:1px solid var(--bd)}
+.mail .bd{padding:12px 14px;font-size:13.5px}
+footer{margin-top:24px;font-size:12px;color:var(--mut)}
+</style></head><body>
+<header><div class="in">
+<div><h1>Escalation Command Center</h1><p>Automated major-incident response for a unified security platform</p></div>
+<div class="ctl">
+<select id="sc" aria-label="Scenario"><option value="new">Scenario 1: first occurrence</option><option value="rep">Scenario 2: repeat incident</option></select>
+<select id="ch" aria-label="Collaboration tool"><option>Webex</option><option>Slack</option><option>Microsoft Teams</option></select>
+<select id="sp" aria-label="Speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select>
+<button id="pp" class="p">Pause</button><button id="rs">Restart</button><button id="fl">Auto-follow: on</button>
+</div></div></header>
+<main>
+<div id="now"></div><div id="steps"></div><div class="kpi" id="kpi"></div><nav id="tabs"></nav><section id="pane"></section>
+<footer>Illustrative simulation with synthetic data. Tool names (Webex, Jira, Salesforce, Splunk On-Call) are configurable defaults, not a statement of any company’s internal setup. Colours approximate the Cisco palette; this is not an official Cisco asset. Built by Madhu Poonacha.</footer>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+var K={detect:["Detect","r"],triage:["Triage","b"],loop:["Loop-in","b"],jira:["Jira","b"],status:["Status page","a"],exec:["Exec email","b"],task:["Action","a"],finding:["Finding","a"],fix:["Mitigate","g"],resolve:["Resolved","g"],rca:["RCA","g"],end:["Scorecard","g"]};
+var STG=[["detect","Detect"],["triage","Triage"],["loop","Loop-in"],["jira","Jira"],["status","Status page"],["exec","Exec email"],["mitigate","Mitigate"],["resolve","Resolve"],["rca","RCA"]];
+var TABS=[["cmd","Command"],["room","Webex"],["jira","Jira"],["status","Status page"],["exec","Exec email"],["rca","RCA & history"],["score","Scorecard"]];
+var MEM=[["Escalation Manager","Incident Commander",0],["Comms Lead","Status page owner",1],["SRE On-Call","Splunk On-Call page",2],["Ingest Engineering Owner","Service catalog owner",3],["Support Duty Manager","Support",4],["Product Owner, Security Platform","Product",5],["Account Team (impacted tenants)","Salesforce account alert",6],["Problem Manager","Problem Management",7]];
+var HIST=[["INC-1874","Console login latency","auth, session-cache","Closed, actions done"],["INC-2291","EU-West ingest delay","ingest, autoscaler, eu-west","Closed, 1 action still open"],["INC-2406","SOAR playbook failures after release","soar, third-party-api","Closed, actions done"]];
+var s,clock,ni,E,timer,sp=1,paused=false,follow=true,cur="cmd",CH="Webex",B="Incident Bot";
+var utc=function(m){m+=142;return String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+var fm=function(m){m=Math.floor(m);return Math.floor(m/60)+"h "+String(m%60).padStart(2,"0")+"m"};
+var term=function(){return CH==="Webex"?"space":"channel"};
+var key=function(n){return "ESC-"+(4100+n)};
+
+function msg(i,t){
+ var N=utc(t+60),R=s.rep;
+ return [
+"Hello, and thank you for your patience. We are sorry: since 02:10 UTC some customers in EU-West POD 3 have seen threat detections arrive up to 40 minutes late. We know how much you rely on timely detections, and we own getting this resolved.\n\nWhat we know: your telemetry is being received and retained. Nothing is lost; processing is delayed.\nWhat we are doing: an incident commander, SRE and Engineering are working together on a dedicated bridge.\nWhat to expect: our next update will be by "+N+" UTC, sooner if anything changes.\nWhat you can do: no action is needed. If you are running a time-critical investigation, your account team can help you prioritise it.",
+"Thank you for bearing with us. We are sorry for the continued disruption.\n\nWhat we found: a configuration change reduced processing capacity in the EU-West POD 3 detection pipeline.\nWhat we have done: we rolled the change back at "+utc(45)+" UTC and added capacity. Detection delay has dropped from about 40 minutes to about 15 minutes.\nWhat to expect: we expect the backlog to be fully cleared by "+utc(135)+" UTC. Our next update will be by "+N+" UTC.\nWhat you can do: no action is needed. For urgent cases, contact your account team and we will prioritise your tenant.",
+"We are nearly there. Delays are now under 5 minutes for almost all customers and the backlog is clearing.\n\nWhat to expect: we expect the backlog to be cleared by "+utc(135)+" UTC. We will then monitor for 10 minutes before declaring this resolved. Our next update will be by "+N+" UTC, or sooner on resolution.\nWe appreciate your patience, and we are still treating this as our top priority.",
+"Resolved. We are sorry for the disruption this caused you and your security team.\n\nTimeline (UTC): 02:10 impact began; "+utc(0)+" detected; "+utc(8)+" first customer update; "+utc(45)+" fix applied; "+utc(132)+" backlog cleared; "+utc(140)+" resolved.\nImpact: detections were delayed by up to 40 minutes. All delayed detections have now been processed and no data was lost.\nWhat happens next: we will share a root-cause summary with corrective actions and dates within 5 business days."+(R?"\n\nThis is similar to an incident on 2 October. We should have prevented it, and we are sorry. The outstanding fix is now owned by our Engineering Director and will be in place by 9 December. We will report progress to you.":"")+"\nIf you would like a review of detections from the affected window, your account team will arrange it."][i];
+}
+function mail(n){
+ var R=s.rep,rp=R?"\nREPEAT INCIDENT: similar to INC-2291 (47 days ago). Corrective action ESC-3987 (change-review gate) is 21 days overdue. Ask: confirm Engineering Director ownership and a firm date.\n":"";
+ var sub="[P1] "+s.id+" Security Platform: "+(n<3?"delayed detections, EU-West POD 3 (37 customers)":"RESOLVED, EU-West POD 3")+" | Update "+n;
+ var b=[
+"Summary: since 02:10 UTC detections are delayed by up to 40 minutes for 37 customers in EU-West POD 3. Telemetry is retained; no data loss identified.\nImpact: 37 of 214 tenants in the POD; 9 regulated; account teams contacting top accounts.\nCustomer comms: status page published "+utc(8)+" UTC; next customer update by "+utc(68)+" UTC.\nOwners paged: IC, SRE On-Call, Engineering, Product, Support, Accounts.\nStatus: investigating. Decisions needed from you: none yet.\n"+rp+"Next executive update: "+utc(70)+" UTC.",
+"Summary: cause identified (autoscaler cap from a config change). Rollback applied at "+utc(45)+" UTC; 20 of 37 customers still affected, delay about 15 min.\nCustomer comms: hourly update 2 sent "+utc(68)+" UTC; next by "+utc(128)+" UTC.\nETA: backlog cleared by "+utc(135)+" UTC.\n"+rp+"Next executive update: "+utc(130)+" UTC.",
+"Summary: RESOLVED at "+utc(140)+" UTC. Backlog cleared at "+utc(132)+" UTC; all tenants at baseline latency. No data loss.\nCustomer comms: resolution notice sent to all 214 tenants.\nNext: problem record and 5-whys RCA in progress; corrective actions tracked in Jira. RCA summary to customers within 5 business days."+(R?"\n"+rp:"")][n-1];
+ return {sub:sub,b:"Leadership team,\n\n"+b+"\n\nJira: "+s.id+"   |   "+CH+" "+term()+": "+s.id+" P1\n\u2014 Escalation Management (automated, reviewed by the incident commander)"};
+}
+function addT(t,l){l.forEach(function(x){s.tasks.push({k:key(s.tasks.length+1),txt:x[0],own:x[1],due:t+x[2]})})}
+function up(t,i){s.ups.push({t:t,i:i})}
+
+function ev(){
+ var R=s.rep,id=s.id;
+ return [
+[0,"cmd","detect","detect","Splunk Observability alert plus first customer case in Salesforce: detections delayed in EU-West POD 3.",null,function(){s.aff=1}],
+[3,"cmd","detect","detect","Correlation groups 37 impacted tenants in one POD. Rule fired: more than 1 customer affected, so status page and customer comms are triggered.",null,function(t){s.aff=37;s.rule=t}],
+[4,"cmd","triage","triage","Auto-triage: P1. "+id+" created. History check: "+(R?"MATCH with INC-2291 (47 days ago, same component tags). Tagged repeat-incident.":"no similar incident in the last 90 days."),null,function(){s.hm=R}],
+[5,"room","loop","loop","Owners auto-paged from the service catalog and "+CH+" "+term()+" opened."+(R?" Engineering Director and Change Manager added because of the repeat match.":""),[B,id+" opened, severity P1. Runbook linked. Paging SRE On-Call, Engineering, Product, Support, Accounts"+(R?", Engineering Director, Change Manager (repeat incident)":"")+". Exec group will be emailed."],function(t){s.room=t;s.mem=MEM.slice();if(R)s.mem.push(["Engineering Director","Repeat-incident escalation",4],["Change Manager","Change Management",6])}],
+[6,"jira","jira","jira","Jira incident created and linked to the Salesforce case, the "+CH+" "+term()+(R?" and INC-2291":"")+".",[B,"Jira "+id+" created, watchers added, linked to Salesforce case 0412-8831."+(R?" Linked to INC-2291; label repeat-incident applied.":"")],function(t){s.jira=t}],
+[8,"status","status","status","Status page published to all 214 tenants in the POD. Customer update 1 sent by email, "+CH+" bot, SMS and webhook.",[B,"Status page published for EU-West POD 3. Update 1 sent to 214 tenants. Next customer update due "+utc(68)+" UTC."],function(t){up(t,0)}],
+[10,"exec","exec","exec","Executive email sent to the leadership group.",[B,"Exec email 1 sent to the leadership distribution list. Hourly digest scheduled."],function(){s.ex=1}],
+[12,"jira","","task","Jira sub-tasks created: pull ingest metrics (SRE); list impacted tenants and top accounts (Account Team).",["SRE On-Call","On it. Pulling consumer-group lag now."],function(t){addT(t,[["Pull ingest pipeline lag and consumer metrics","SRE On-Call",12],["Identify impacted tenants; flag regulated and top accounts","Account Team",18]])}],
+[22,"cmd","","finding","Root cause isolated: autoscaler cap from a config change at 02:10 UTC.",["SRE On-Call","Consumer lag stuck on partition group 7. Autoscaler max was lowered at 02:10 UTC."],null],
+[26,"jira","","task","Jira sub-tasks created: roll back cap and scale consumers (Engineering); start RCA draft (Problem Manager).",["Ingest Engineering Owner","Rolling back the cap and scaling consumers 3x."],function(t){addT(t,[["Roll back autoscaler cap; scale consumers 3x","Ingest Engineering Owner",19],["Start RCA draft and open problem record","Problem Manager",30]])}],
+[45,"cmd","mitigate","fix","Rollback applied; backlog draining. 20 of 37 tenants still affected.",["Ingest Engineering Owner","Rollback done at "+utc(45)+" UTC. Lag draining at 3x."],function(){s.aff=20}],
+[68,"status","","status","Hourly customer update 2 published and re-sent; executive update 2 sent.",[B,"Hourly update 2 sent to 214 tenants. Exec update 2 sent."],function(t){up(t,1);s.ex=2}],
+[95,"cmd","","fix","Backlog about 70% processed; 6 tenants still affected.",["SRE On-Call","Backlog 70% processed. Delay under 10 minutes."],function(){s.aff=6}],
+[128,"status","","status","Hourly customer update 3 published and re-sent.",[B,"Hourly update 3 sent to 214 tenants."],function(t){up(t,2);s.aff=2}],
+[132,"cmd","","fix","Backlog cleared; latency at baseline. 10-minute monitoring window started.",["SRE On-Call","Backlog cleared. Latency at baseline. Monitoring for 10 minutes."],function(){s.aff=0}],
+[140,"status","resolve","resolve","Resolved. Resolution notice sent to all tenants; executive resolution email sent.",[B,id+" resolved. Resolution notice and exec email sent. Problem record opening."],function(t){up(t,3);s.ex=3;s.res=t}],
+[142,"rca","rca","rca","Problem record opened, 5-whys RCA drafted, corrective actions created in Jira, incident saved to history with tags"+(R?", and repeat explanation generated for stakeholders.":"."),["Problem Manager","RCA drafted. Corrective actions linked in Jira with owners and dates."],function(){s.rca=true}],
+[150,"score","","end","Scorecard computed against response targets.",null,function(){s.done=true}]];
+}
+
+function rcaData(){
+ return s.rep?{w:["Why did it happen again? A different team lowered the autoscaler maximum on the same service.","Why was that possible? The load-test gate from INC-2291 (ESC-3987) was still open, 21 days overdue.","Why was it open? The owner changed and the action was not in the Problem Management review cadence.","Why was it not caught earlier? The lag alert fired but routed to a low-priority queue.","Why? Alert routing was not part of the action’s definition of done."],
+ c:[["Make the load-test gate a blocking check on autoscaler config","Change Management","9 Dec"],["Route lag-growth alert to P1 on-call; add routing to definition of done","SRE","1 week"],["Auto-escalate corrective actions overdue 7 days to the Engineering Director","Problem Management","2 weeks"],["Monthly repeat-incident review with an executive owner","Escalation Management","Ongoing"]]}
+ :{w:["Why were detections late? EU-West consumers fell behind ingest at peak load.","Why? The autoscaler maximum had been lowered below peak demand.","Why? A cost-tuning config change shipped without load validation.","Why? Config changes sit outside the change-risk checklist.","Why was it found by customers? There was no alert on consumer-lag growth."],
+ c:[["Alert on consumer-lag growth and autoscaler saturation","SRE","2 weeks"],["Add config changes to change-risk review with a load-test gate","Change Management","3 weeks"],["Tenant-level detection-latency SLO on dashboards","Observability","6 weeks"]]};
+}
+function wait(){return '<p class="mut">Waiting for the automation trigger. The tab will populate on its own.</p>'}
+function rules(){
+ var r=[[s.ups.length,"More than 1 customer affected: status page to every tenant in the POD, then hourly updates"],[s.room,"P1: page owners from the service catalog and open the "+CH+" "+term()],[s.jira,"P1: create Jira incident, link Salesforce case and "+CH],[s.ex,"P1: executive email, then hourly digest"],[s.hm,"Matches a past incident: tag repeat-incident, add Problem Mgmt, Eng Director and Change Mgmt"],[s.rca,"Resolved: RCA within 2 hours, corrective actions in Jira, save to history with tags"]];
+ return r.map(function(x){return '<p style="margin:4px 0"><span class="'+(x[0]?"g":"mut")+'">'+(x[0]?"\u2713":"\u25CB")+'</span> '+x[1]+'</p>'}).join("");
+}
+var P={
+cmd:function(){return '<div class="cols"><div class="box"><h3>Automated timeline</h3><ol id="lg">'+s.log.map(function(l){return '<li><span class="t">'+utc(l[0])+' UTC</span><span class="tag '+K[l[1]][1]+'">'+K[l[1]][0]+'</span>'+l[2]+'</li>'}).join("")+'</ol></div><div class="box"><h3>Automation rules</h3>'+rules()+'<p class="mut" style="font-size:12.5px">Humans keep severity overrides, customer-wording sign-off and risk decisions.</p></div></div>'},
+room:function(){if(!s.room)return wait();
+ return '<div class="cols"><div class="box"><h3>'+CH+' '+term()+': '+s.id+' | P1 | Delayed detections, EU-West POD 3</h3><table><tr><th>Role</th><th>Reached via</th><th>Status</th></tr>'+s.mem.map(function(m){var j=clock>=s.room+m[2];return '<tr><td>'+m[0]+'</td><td>'+m[1]+'</td><td class="'+(j?"g":"a")+'">'+(j?"Joined":"Paging...")+'</td></tr>'}).join("")+'</table><p><b>Informed by email:</b> SVP Engineering, VP Customer Experience, GM Security, CISO office</p></div><div class="box"><h3>Conversation</h3><div class="chat" id="ct">'+s.chat.map(function(c){return '<div class="m '+(c[1]===B?"bot":"")+'"><b>'+c[1]+'</b> <span class="t">'+utc(c[0])+'</span><br>'+c[2]+'</div>'}).join("")+'</div></div></div>'},
+jira:function(){if(!s.jira)return wait();
+ var f=[["Priority",'<span class="badge r">P1</span>'],["Assignee","Escalation Manager (IC)"],["Reporter",B],["Components","Detection pipeline, EU-West POD 3"],["Labels",s.rep?"security-platform, <b class=r>repeat-incident</b>":"security-platform, major-incident"],["Linked","Salesforce case 0412-8831; "+CH+" "+term()+(s.rep?"; <b>INC-2291</b> (prior incident)":"")],["Watchers","IC, SRE, Engineering, Product, Support, Accounts, exec group"],["Customers impacted",s.aff+" (peak 37 of 214 tenants)"]];
+ var h='<div class="box"><h3>'+s.id+' &nbsp;<span class="badge">'+(s.res?"Resolved":"In progress")+'</span></h3><p><b>Security Platform: delayed detections in EU-West POD 3</b></p><table>'+f.map(function(x){return '<tr><td class="mut" style="width:150px">'+x[0]+'</td><td>'+x[1]+'</td></tr>'}).join("")+'</table></div>';
+ h+='<div class="box"><h3>Sub-tasks</h3><div class="sc"><table><tr><th>Key</th><th>Task</th><th>Owner</th><th>Due</th><th>Status</th></tr>'+s.tasks.map(function(k){var d=clock>=k.due;return '<tr><td>'+k.k+'</td><td>'+k.txt+'</td><td>'+k.own+'</td><td>'+utc(k.due)+'</td><td class="'+(d?"g":"a")+'">'+(d?"Done":"In progress")+'</td></tr>'}).join("")+'</table></div></div>';
+ if(s.rca){var c=rcaData().c;h+='<div class="box"><h3>PRB-882 Problem record: corrective actions</h3><table>'+c.map(function(x,i){return '<tr><td>ESC-'+(4201+i)+'</td><td>'+x[0]+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td></tr>'}).join("")+'</table></div>'}
+ return h},
+status:function(){if(!s.ups.length)return wait()+'<div class="pods"><div class="pod">POD 1</div><div class="pod">POD 2</div><div class="pod">POD 3</div><div class="pod">POD 4</div></div>';
+ var n=s.ups.length,st=["Investigating","Identified","Monitoring","Resolved"],pc=s.res?"":(s.aff>0?"d":"m");
+ var h='<div class="box"><h3>Security Platform Status | EU-West</h3><div class="pods"><div class="pod">POD 1</div><div class="pod">POD 2</div><div class="pod '+pc+'">POD 3 '+(s.res?"Operational":(s.aff>0?"Degraded":"Monitoring"))+'</div><div class="pod">POD 4</div></div><p class="mut">Rule: more than 1 customer affected, so every tenant in POD 3 (214) is notified. Cadence: every 60 minutes.</p>';
+ h+='<h3>Notifications sent (cumulative)</h3><span class="chip">Email: '+612*n+'</span><span class="chip">'+CH+' bot: '+214*n+'</span><span class="chip">SMS: '+41*n+'</span><span class="chip">Webhook/RSS: '+87*n+'</span></div>';
+ h+=s.ups.slice().reverse().map(function(u){return '<div class="box"><span class="badge '+(u.i===3?"g":"a")+'">'+st[u.i]+'</span> <b>Update '+(u.i+1)+'</b> <span class="t">'+utc(u.t)+' UTC</span><p class="pre">'+msg(u.i,u.t)+'</p></div>'}).join("");
+ return h},
+exec:function(){if(!s.ex)return wait();var h="";
+ for(var i=s.ex;i>=1;i--){var m=mail(i);h+='<div class="mail"><div class="hd"><b>To:</b> Exec Leadership Group &nbsp; <b>Cc:</b> Escalation Mgmt, Support Leadership, Problem Mgmt<br><b>Subject:</b> '+m.sub+'</div><div class="bd pre">'+m.b+'</div></div>'}return h},
+rca:function(){if(!s.rca)return wait();var d=rcaData();
+ var h='<div class="cols"><div class="box"><h3>5 Whys: '+s.id+'</h3>'+d.w.map(function(w,i){return '<p style="margin:5px 0"><b>'+(i+1)+'.</b> '+w+'</p>'}).join("")+'<h3 style="margin-top:12px">Corrective actions (Jira PRB-882)</h3><table>'+d.c.map(function(x,i){return '<tr><td>ESC-'+(4201+i)+'</td><td>'+x[0]+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td></tr>'}).join("")+'</table></div>';
+ var rows=HIST.filter(function(x){return s.rep||x[0]!=="INC-2291"});
+ h+='<div class="box"><h3>Incident history and tagging</h3><div class="sc"><table><tr><th>ID</th><th>Incident</th><th>Tags</th><th>Outcome</th></tr><tr style="background:#e6f6fc"><td>'+s.id+' <span class="badge g">NEW</span></td><td>EU-West ingest delay</td><td>ingest, autoscaler, eu-west'+(s.rep?', <b class="r">repeat-incident</b>':"")+'</td><td>RCA complete, '+d.c.length+' actions</td></tr>'+rows.map(function(x){var m=s.rep&&x[0]==="INC-2291";return '<tr'+(m?' style="background:#fdecec"':"")+'><td>'+x[0]+(m?' <span class="badge r">MATCH</span>':"")+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td><td>'+x[3]+'</td></tr>'}).join("")+'</table></div></div></div>';
+ if(s.rep)h+='<div class="box" style="border-left:4px solid var(--r)"><h3>Auto-generated stakeholder briefing: why did this repeat?</h3><p class="pre">Why it happened again: the first incident (INC-2291) produced three corrective actions. Alerting was completed, but the change-review gate (ESC-3987) stayed open 21 days past due, so a second config change on the same autoscaler reached production.\n\nWhat is different now: the gate becomes a blocking check by 9 December; alert routing is part of the definition of done; overdue corrective actions escalate to the Engineering Director after 7 days; a monthly repeat-incident review has an executive owner.\n\nOwner who explains this to customers and leadership: Engineering Director, supported by the Escalation Manager.</p></div>';
+ return h},
+score:function(){if(!s.done)return wait();
+ var up0=s.ups[0].t,gap=Math.max(s.ups[1].t-s.ups[0].t,s.ups[2].t-s.ups[1].t,s.ups[3].t-s.ups[2].t);
+ var mj=Math.max.apply(null,s.mem.map(function(m){return m[2]}))+s.room-3;
+ var c=[["Auto-triage to P1 and incident created","5 min or less",(4-0)+" min from first signal",true],["Status page after multi-customer impact detected","10 min or less",(up0-s.rule)+" min",up0-s.rule<=10],["Customer update cadence (longest gap)","60 min or less",gap+" min",gap<=60],["Jira incident created","10 min or less",(s.jira-0)+" min",s.jira<=10],["All owners paged and joined","10 min after correlation",mj+" min",mj<=10],["First executive email","15 min or less","10 min",true],["Prior incident matched and tagged",s.rep?"Required":"Not applicable",s.rep?"Matched INC-2291":"No match",true],["RCA and corrective actions after resolution","2 hours or less","2 min",true]];
+ return '<div class="box"><h3>Readiness scorecard: '+s.id+' | time to restore '+fm(s.res)+'</h3><table><tr><th>Check</th><th>Target</th><th>Result</th><th></th></tr>'+c.map(function(x){return '<tr><td>'+x[0]+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td><td class="'+(x[3]?"g":"r")+'"><b>'+(x[3]?"Pass":"Miss")+'</b></td></tr>'}).join("")+'</table></div>'}
+};
+
+function run(e){
+ var t=e[0];s.log.push([t,e[3],e[4]]);s.now=e[4];if(e[2])s.st[e[2]]=true;
+ if(e[5])s.chat.push([t,e[5][0],e[5][1]]);if(e[6])e[6](t);if(follow)cur=e[1];
+}
+function render(){
+ var tl="";TABS.forEach(function(x){if(x[0]===cur)tl=x[1]==="Webex"?CH:x[1]});
+ $("now").innerHTML=s.now?'<b>'+tl+':</b> '+s.now:"Starting...";
+ $("steps").innerHTML=STG.map(function(g){return '<span class="st '+(s.st[g[0]]?"on":"")+'">'+g[1]+'</span>'}).join("");
+ var open=s.tasks.filter(function(k){return clock<k.due}).length,nx;
+ if(s.res)nx='<span class="g">Closed</span>';
+ else if(!s.ups.length)nx=s.rule?(Math.max(0,Math.ceil(10-(clock-s.rule)))+" min"):"Armed";
+ else{var r=Math.ceil(60-(clock-s.ups[s.ups.length-1].t));nx=r>=0?r+" min":'<span class="r">OVERDUE</span>'}
+ $("kpi").innerHTML='<div><small>Incident clock</small><b>'+utc(Math.min(clock,s.res||clock))+' UTC</b></div><div><small>Customers impacted</small><b>'+s.aff+'</b></div><div><small>Open Jira tasks</small><b>'+open+'</b></div><div><small>Next customer update</small><b>'+nx+'</b></div><div><small>Time to restore</small><b>'+(s.res?fm(s.res):"-")+'</b></div>';
+ $("tabs").innerHTML=TABS.map(function(x){return '<button data-v="'+x[0]+'" class="'+(x[0]===cur?"on":"")+'">'+(x[1]==="Webex"?CH:x[1])+'</button>'}).join("");
+ $("pane").innerHTML=P[cur]();
+ ["lg","ct"].forEach(function(i){var e=$(i);if(e)e.scrollTop=1e6});
+}
+function tick(){
+ clock+=0.5*sp;while(ni<E.length&&E[ni][0]<=clock){run(E[ni]);ni++}
+ render();if(s.done)clearInterval(timer);
+}
+function load(){
+ s={rep:$("sc").value==="rep",aff:0,log:[],chat:[],mem:[],tasks:[],ups:[],st:{}};s.id=s.rep?"INC-2517":"INC-2291";
+ clock=0;ni=0;E=ev();cur="cmd";clearInterval(timer);paused=false;$("pp").textContent="Pause";timer=setInterval(tick,100);tick();
+}
+$("tabs").onclick=function(e){var v=e.target.getAttribute("data-v");if(v){cur=v;follow=false;$("fl").textContent="Auto-follow: off";render()}};
+$("fl").onclick=function(){follow=!follow;$("fl").textContent="Auto-follow: "+(follow?"on":"off")};
+$("sc").onchange=load;$("rs").onclick=load;
+$("ch").onchange=function(){CH=$("ch").value;render()};
+$("sp").onchange=function(){sp=+$("sp").value};
+$("pp").onclick=function(){if(s.done)return;paused=!paused;if(paused){clearInterval(timer);$("pp").textContent="Resume"}else{timer=setInterval(tick,100);$("pp").textContent="Pause"}};
+load();
+</script></body></html>
